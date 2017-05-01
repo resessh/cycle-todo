@@ -11,17 +11,26 @@ type So = {
 }
 
 type Si = {
-    DOM: Observable<VNode>
+    DOM: Observable<VNode>;
+}
+
+type todoItem = {
+    title: string;
 }
 
 function main({DOM}: So): Si {
     const eventClickAddItemButton$ = DOM.select('#new-todo button').events('click');
     const eventNewTodoItem$ = DOM.select('#new-todo input').events('change')
-        .map(ev => (ev.target as HTMLInputElement).value)
-        .startWith("hoge");
+        .map(ev => (ev.target as HTMLInputElement).value);
+
+    const todoItemList$: Observable<todoItem[]> = eventNewTodoItem$
+        .scan<string, todoItem[]>((list: todoItem[], newItemTitle: string): todoItem[] => {
+            list.push({ title: newItemTitle });
+            return list;
+        }).startWith([]);
 
     return {
-        DOM: eventNewTodoItem$.map((item) => {
+        DOM: todoItemList$.map((todoItemList: todoItem[]) => {
             return div('.container', [
                 div('.row', [
                     div('.col-xs-8.col-xs-offset-2', [
@@ -40,16 +49,16 @@ function main({DOM}: So): Si {
                                 ])
                             ]),
                             div('#todo-list.panel-body.row', [
-                                ul('.list-group.col-xs-10.col-xs-offset-1', [
-                                    li('.list-group-item.row', [
+                                ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map(todoItem => {
+                                    return li('.list-group-item.row', [
                                         input('.col-xs-1.col-xs-offset-1', {
                                             attrs: {
                                                 type: 'checkbox'
                                             }
                                         }),
-                                        p('.col-xs-8.list-group-item-heading', [item])
+                                        p('.col-xs-8.list-group-item-heading', [todoItem.title])
                                     ])
-                                ]),
+                                })),
                                 button('.btn.btn-success.col-xs-4.col-xs-offset-4.btn-lg', [
                                     i('.fa.fa-check')
                                 ])
