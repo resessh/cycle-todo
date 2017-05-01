@@ -22,8 +22,14 @@ function main({DOM}: So): Si {
     const eventClickAddItemButton$ = DOM.select('#new-todo button').events('click');
     const eventNewTodoItem$ = DOM.select('#new-todo input').events('change')
         .map(ev => (ev.target as HTMLInputElement).value);
+    const newTodoItem$ = eventClickAddItemButton$.withLatestFrom(
+        eventNewTodoItem$,
+        (_, value) => {
+            return value;
+        }
+    )
 
-    const todoItemList$: Observable<todoItem[]> = eventNewTodoItem$
+    const todoItemList$: Observable<todoItem[]> = newTodoItem$
         .scan<string, todoItem[]>((list: todoItem[], newItemTitle: string): todoItem[] => {
             list.push({ title: newItemTitle });
             return list;
