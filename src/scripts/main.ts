@@ -27,7 +27,7 @@ function main({DOM}: So): Si {
         .scan<string, todoItem[]>((list: todoItem[], newItemTitle: string): todoItem[] => {
             list.push({ title: newItemTitle });
             return list;
-        }).startWith([]);
+        }, []).startWith([]);
 
     return {
         DOM: todoItemList$.map((todoItemList: todoItem[]) => {
