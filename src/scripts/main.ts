@@ -19,6 +19,44 @@ type todoItem = {
     title: string;
 }
 
+function renderDOM(todoItemList$: Observable<todoItem[]>): Observable<VNode> {
+    return todoItemList$.map((todoItemList: todoItem[]) => {
+        return div('.container', [
+            div('.row', [
+                div('.col-xs-8.col-xs-offset-2', [
+                    div('.panel.panel-default', [
+                        div('.panel-heading', [
+                            h2('.panel-title', ['cyclejs todo'])
+                        ]),
+                        div('#new-todo.panel-body.row', [
+                            div('.input-group.col-xs-8.col-xs-offset-2.input-group-lg', [
+                                input('.form-control'),
+                                span('.input-group-btn', [
+                                    button('.btn.btn-success', [
+                                        i('.fa.fa-plus')
+                                    ])
+                                ])
+                            ])
+                        ]),
+                        div('#todo-list.panel-body.row', [
+                            ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map((todoItem, index) =>
+                                li('.list-group-item.row', [
+                                    p('.col-xs-8.list-group-item-heading', [todoItem.title]),
+                                    button('.col-xs-2.col-xs-offset-2.btn.btn-success.fa.fa-check', {
+                                        attrs: {
+                                            'data-id': index
+                                        }
+                                    })
+                                ])
+                            ))
+                        ])
+                    ])
+                ])
+            ])
+        ])
+    });
+}
+
 function main({DOM}: So): Si {
     const eventClickAddItemButton$ = DOM.select('#new-todo button').events('click');
     const eventNewTodoItem$ = DOM.select('#new-todo input').events('change')
@@ -26,7 +64,7 @@ function main({DOM}: So): Si {
     const eventClickRemoveItemButton$ = DOM.select('#todo-list ul li button').events('click')
         .map((ev: CycleDOMEvent) => (ev.ownerTarget as HTMLButtonElement).dataset['id']);
 
-    const todoItemList$ = Observable.merge(
+    const todoItemList$: Observable<todoItem[]> = Observable.merge(
         eventClickAddItemButton$.withLatestFrom(
             eventNewTodoItem$,
             (_, title) => append({ title })
@@ -39,42 +77,7 @@ function main({DOM}: So): Si {
         }, []).startWith([]);
 
     return {
-        DOM: todoItemList$.map((todoItemList: todoItem[]) => {
-            console.log(todoItemList);
-            return div('.container', [
-                div('.row', [
-                    div('.col-xs-8.col-xs-offset-2', [
-                        div('.panel.panel-default', [
-                            div('.panel-heading', [
-                                h2('.panel-title', ['cyclejs todo'])
-                            ]),
-                            div('#new-todo.panel-body.row', [
-                                div('.input-group.col-xs-8.col-xs-offset-2.input-group-lg', [
-                                    input('.form-control'),
-                                    span('.input-group-btn', [
-                                        button('.btn.btn-success', [
-                                            i('.fa.fa-plus')
-                                        ])
-                                    ])
-                                ])
-                            ]),
-                            div('#todo-list.panel-body.row', [
-                                ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map((todoItem, index) =>
-                                    li('.list-group-item.row', [
-                                        p('.col-xs-8.list-group-item-heading', [todoItem.title]),
-                                        button('.col-xs-2.col-xs-offset-2.btn.btn-success.fa.fa-check', {
-                                            attrs: {
-                                                'data-id': index
-                                            }
-                                        })
-                                    ])
-                                ))
-                            ])
-                        ])
-                    ])
-                ])
-            ])
-        })
+        DOM: renderDOM(todoItemList$);
     }
 }
 
