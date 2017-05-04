@@ -24,42 +24,40 @@ type todoState = {
     list: todoItem[];
 }
 
-function renderDOM(todoItemList$: Observable<todoItem[]>): Observable<VNode> {
-    return todoItemList$.map((todoItemList: todoItem[]) => {
-        return div('.container', [
-            div('.row', [
-                div('.col-xs-8.col-xs-offset-2', [
-                    div('.panel.panel-default', [
-                        div('.panel-heading', [
-                            h2('.panel-title', ['cyclejs todo'])
-                        ]),
-                        div('#new-todo.panel-body.row', [
-                            div('.input-group.col-xs-8.col-xs-offset-2.input-group-lg', [
-                                input('.form-control'),
-                                span('.input-group-btn', [
-                                    button('.btn.btn-success', [
-                                        i('.fa.fa-plus')
-                                    ])
+function renderDOM(todoItemList: todoItem[]): VNode {
+    return div('.container', [
+        div('.row', [
+            div('.col-xs-8.col-xs-offset-2', [
+                div('.panel.panel-default', [
+                    div('.panel-heading', [
+                        h2('.panel-title', ['cyclejs todo'])
+                    ]),
+                    div('#new-todo.panel-body.row', [
+                        div('.input-group.col-xs-8.col-xs-offset-2.input-group-lg', [
+                            input('.form-control'),
+                            span('.input-group-btn', [
+                                button('.btn.btn-success', [
+                                    i('.fa.fa-plus')
                                 ])
                             ])
-                        ]),
-                        div('#todo-list.panel-body.row', [
-                            ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map((todoItem, index) =>
-                                li('.list-group-item.row', [
-                                    p('.col-xs-8.list-group-item-heading', [todoItem.title]),
-                                    button('.col-xs-2.col-xs-offset-2.btn.btn-success.fa.fa-check', {
-                                        attrs: {
-                                            'data-id': index
-                                        }
-                                    })
-                                ])
-                            ))
                         ])
+                    ]),
+                    div('#todo-list.panel-body.row', [
+                        ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map((todoItem, index) =>
+                            li('.list-group-item.row', [
+                                p('.col-xs-8.list-group-item-heading', [todoItem.title]),
+                                button('.col-xs-2.col-xs-offset-2.btn.btn-success.fa.fa-check', {
+                                    attrs: {
+                                        'data-id': index
+                                    }
+                                })
+                            ])
+                        ))
                     ])
                 ])
             ])
         ])
-    });
+    ])
 }
 
 function main({DOM}: So): Si {
@@ -85,7 +83,7 @@ function main({DOM}: So): Si {
         }, []).startWith([]);
 
     return {
-        DOM: renderDOM(todoItemList$)
+        DOM: todoItemList$.map(todoItemList => renderDOM(todoItemList))
     }
 }
 
