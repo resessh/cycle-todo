@@ -4,7 +4,7 @@ import { VNode } from '@cycle/dom';
 import { DOMSource } from '@cycle/dom/rxjs-typings';
 import { CycleDOMEvent, div, input, p, h2, button, span, i, ul, li, makeDOMDriver } from '@cycle/dom';
 import { run } from '@cycle/rxjs-run';
-import { append, remove } from 'ramda';
+import { append, remove, over, lensProp } from 'ramda';
 
 type So = {
     DOM: DOMSource;
@@ -24,7 +24,7 @@ type todoState = {
     list: todoItem[];
 }
 
-function renderDOM(todoItemList: todoItem[]): VNode {
+function renderDOM({inputValue, list}: todoState): VNode {
     return div('.container', [
         div('.row', [
             div('.col-xs-8.col-xs-offset-2', [
@@ -43,7 +43,7 @@ function renderDOM(todoItemList: todoItem[]): VNode {
                         ])
                     ]),
                     div('#todo-list.panel-body.row', [
-                        ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map((todoItem, index) =>
+                        ul('.list-group.col-xs-10.col-xs-offset-1', list.map((todoItem, index) =>
                             li('.list-group-item.row', [
                                 p('.col-xs-8.list-group-item-heading', [todoItem.title]),
                                 button('.col-xs-2.col-xs-offset-2.btn.btn-success.fa.fa-check', {
@@ -70,20 +70,20 @@ function main({DOM}: So): Si {
     const eventClickRemoveItemButton$ = DOM.select('#todo-list ul li button').events('click')
         .map((ev: CycleDOMEvent) => (ev.ownerTarget as HTMLButtonElement).dataset['id']);
 
-    const todoItemList$: Observable<todoItem[]> = Observable.merge(
+    const todoState$: Observable<todoState> = Observable.merge(
         eventAddItem$.withLatestFrom(
             valueNewTodoItem$,
-            (_, title) => append({ title })
+            (_, title) => over(lensProp('list'), append({title, completed: false}))
         ),
         eventClickRemoveItemButton$.map(
-            (index) => remove(Number(index), 1)
+            index => over(lensProp('list'), remove(Number(index), 1))
         ))
-        .scan((todoList: todoItem[], reducer) => {
-            return reducer(todoList);
-        }, []).startWith([]);
+        .scan((state: todoState, reducer) => {
+            return reducer(state);
+        }, { inputValue: '', list: [] }).startWith({ inputValue: '', list: [] });
 
     return {
-        DOM: todoItemList$.map(todoItemList => renderDOM(todoItemList))
+        DOM: todoState$.map((todoState) => renderDOM(todoState))
     }
 }
 
