@@ -15,16 +15,16 @@ type Si = {
     DOM: Observable<VNode>;
 }
 
-type todoItem = {
+type TodoItem = {
     title: string;
 }
 
-type todoState = {
+type TodoState = {
     inputValue: string;
-    list: todoItem[];
+    list: TodoItem[];
 }
 
-function renderDOM({inputValue, list}: todoState): VNode {
+function renderDOM({inputValue, list}: TodoState): VNode {
     return div('.container', [
         div('.row', [
             div('.col-xs-8.col-xs-offset-2', [
@@ -70,7 +70,7 @@ function main({DOM}: So): Si {
     const eventClickRemoveItemButton$ = DOM.select('#todo-list ul li button').events('click')
         .map((ev: CycleDOMEvent) => (ev.ownerTarget as HTMLButtonElement).dataset['id']);
 
-    const todoState$: Observable<todoState> = Observable.merge(
+    const todoState$: Observable<TodoState> = Observable.merge(
         eventAddItem$.withLatestFrom(
             valueNewTodoItem$,
             (_, title) => over(lensProp('list'), append({title, completed: false}))
@@ -78,7 +78,7 @@ function main({DOM}: So): Si {
         eventClickRemoveItemButton$.map(
             index => over(lensProp('list'), remove(Number(index), 1))
         ))
-        .scan((state: todoState, reducer) => {
+        .scan((state: TodoState, reducer) => {
             return reducer(state);
         }, { inputValue: '', list: [] }).startWith({ inputValue: '', list: [] });
 
