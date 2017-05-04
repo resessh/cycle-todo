@@ -2,7 +2,7 @@ import 'rxjs/Rx';
 import { Observable } from 'rxjs';
 import { VNode } from '@cycle/dom';
 import { DOMSource } from '@cycle/dom/rxjs-typings';
-import { div, input, p, h2, button, span, i, ul, li, makeDOMDriver } from '@cycle/dom';
+import { CycleDOMEvent, div, input, p, h2, button, span, i, ul, li, makeDOMDriver } from '@cycle/dom';
 import { run } from '@cycle/rxjs-run';
 
 type So = {
@@ -22,21 +22,27 @@ function main({DOM}: So): Si {
     const eventClickAddItemButton$ = DOM.select('#new-todo button').events('click');
     const eventNewTodoItem$ = DOM.select('#new-todo input').events('change')
         .map(ev => (ev.target as HTMLInputElement).value);
-    const newTodoItem$ = eventClickAddItemButton$.withLatestFrom(
-        eventNewTodoItem$,
-        (_, value) => {
-            return value;
-        }
-    )
+    const eventClickRemoveItemButton$ = DOM.select('#todo-list ul li button').events('click')
+        .map((ev: CycleDOMEvent) => (ev.ownerTarget as HTMLButtonElement).dataset['id']);
 
-    const todoItemList$: Observable<todoItem[]> = newTodoItem$
-        .scan<string, todoItem[]>((list: todoItem[], newItemTitle: string): todoItem[] => {
-            list.push({ title: newItemTitle });
-            return list;
+    const todoItemList$ = Observable.merge(
+        eventClickAddItemButton$.withLatestFrom(
+            eventNewTodoItem$,
+            (_, value) => (todoList: todoItem[]): todoItem[] => [...todoList, { title: value }]
+        ),
+        eventClickRemoveItemButton$.map(
+            (index) => (todoList: todoItem[]): todoItem[] => {
+                todoList.splice(Number(index), 1);
+                return todoList;
+            }
+        ))
+        .scan((todoList: todoItem[], reducer) => {
+            return reducer(todoList);
         }, []).startWith([]);
 
     return {
         DOM: todoItemList$.map((todoItemList: todoItem[]) => {
+            console.log(todoItemList);
             return div('.container', [
                 div('.row', [
                     div('.col-xs-8.col-xs-offset-2', [
@@ -55,19 +61,16 @@ function main({DOM}: So): Si {
                                 ])
                             ]),
                             div('#todo-list.panel-body.row', [
-                                ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map(todoItem => {
+                                ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map((todoItem, index) => {
                                     return li('.list-group-item.row', [
-                                        input('.col-xs-1.col-xs-offset-1', {
+                                        p('.col-xs-8.list-group-item-heading', [todoItem.title]),
+                                        button('.col-xs-2.col-xs-offset-2.btn.btn-success.fa.fa-check', {
                                             attrs: {
-                                                type: 'checkbox'
+                                                'data-id': index
                                             }
-                                        }),
-                                        p('.col-xs-8.list-group-item-heading', [todoItem.title])
+                                        })
                                     ])
-                                })),
-                                button('.btn.btn-success.col-xs-4.col-xs-offset-4.btn-lg', [
-                                    i('.fa.fa-check')
-                                ])
+                                }))
                             ])
                         ])
                     ])
