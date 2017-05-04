@@ -58,15 +58,18 @@ function renderDOM(todoItemList$: Observable<todoItem[]>): Observable<VNode> {
 }
 
 function main({DOM}: So): Si {
-    const eventClickAddItemButton$ = DOM.select('#new-todo button').events('click');
-    const eventNewTodoItem$ = DOM.select('#new-todo input').events('change')
+    const eventAddItem$ = Observable.merge(
+        DOM.select('#new-todo button').events('click'),
+        DOM.select('#new-todo input').events('change')
+    )
+    const valueNewTodoItem$ = DOM.select('#new-todo input').events('change')
         .map(ev => (ev.target as HTMLInputElement).value);
     const eventClickRemoveItemButton$ = DOM.select('#todo-list ul li button').events('click')
         .map((ev: CycleDOMEvent) => (ev.ownerTarget as HTMLButtonElement).dataset['id']);
 
     const todoItemList$: Observable<todoItem[]> = Observable.merge(
-        eventClickAddItemButton$.withLatestFrom(
-            eventNewTodoItem$,
+        eventAddItem$.withLatestFrom(
+            valueNewTodoItem$,
             (_, title) => append({ title })
         ),
         eventClickRemoveItemButton$.map(
