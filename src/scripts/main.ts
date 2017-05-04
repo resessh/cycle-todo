@@ -19,6 +19,11 @@ type todoItem = {
     title: string;
 }
 
+type todoState = {
+    inputValue: string;
+    list: todoItem[];
+}
+
 function renderDOM(todoItemList$: Observable<todoItem[]>): Observable<VNode> {
     return todoItemList$.map((todoItemList: todoItem[]) => {
         return div('.container', [
