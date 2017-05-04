@@ -77,7 +77,7 @@ function main({DOM}: So): Si {
         }, []).startWith([]);
 
     return {
-        DOM: renderDOM(todoItemList$);
+        DOM: renderDOM(todoItemList$)
     }
 }
 
