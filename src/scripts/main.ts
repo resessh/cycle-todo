@@ -4,6 +4,7 @@ import { VNode } from '@cycle/dom';
 import { DOMSource } from '@cycle/dom/rxjs-typings';
 import { CycleDOMEvent, div, input, p, h2, button, span, i, ul, li, makeDOMDriver } from '@cycle/dom';
 import { run } from '@cycle/rxjs-run';
+import { append, remove } from 'ramda';
 
 type So = {
     DOM: DOMSource;
@@ -28,13 +29,10 @@ function main({DOM}: So): Si {
     const todoItemList$ = Observable.merge(
         eventClickAddItemButton$.withLatestFrom(
             eventNewTodoItem$,
-            (_, value) => (todoList: todoItem[]): todoItem[] => [...todoList, { title: value }]
+            (_, title) => append({ title })
         ),
         eventClickRemoveItemButton$.map(
-            (index) => (todoList: todoItem[]): todoItem[] => {
-                todoList.splice(Number(index), 1);
-                return todoList;
-            }
+            (index) => remove(Number(index), 1)
         ))
         .scan((todoList: todoItem[], reducer) => {
             return reducer(todoList);
@@ -61,8 +59,8 @@ function main({DOM}: So): Si {
                                 ])
                             ]),
                             div('#todo-list.panel-body.row', [
-                                ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map((todoItem, index) => {
-                                    return li('.list-group-item.row', [
+                                ul('.list-group.col-xs-10.col-xs-offset-1', todoItemList.map((todoItem, index) =>
+                                    li('.list-group-item.row', [
                                         p('.col-xs-8.list-group-item-heading', [todoItem.title]),
                                         button('.col-xs-2.col-xs-offset-2.btn.btn-success.fa.fa-check', {
                                             attrs: {
@@ -70,7 +68,7 @@ function main({DOM}: So): Si {
                                             }
                                         })
                                     ])
-                                }))
+                                ))
                             ])
                         ])
                     ])
