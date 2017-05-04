@@ -74,7 +74,7 @@ function main({DOM}: So): Si {
     const todoState$: Observable<TodoState> = Observable.merge(
         eventAddItem$.withLatestFrom(
             valueNewTodoItem$,
-            (_, title) => over(lensProp('list'), append({title, completed: false}))
+            (_, title) => over(lensProp('list'), append({ title, completed: false }))
         ),
         removeTodoItemAt$.map(
             index => over(lensProp('list'), remove(Number(index), 1))
