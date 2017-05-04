@@ -69,7 +69,7 @@ function main({DOM}: So): Si {
     const valueNewTodoItem$ = DOM.select('#new-todo input').events('change')
         .map(ev => (ev.target as HTMLInputElement).value);
     const removeTodoItemAt$ = DOM.select('#todo-list ul li button').events('click')
-        .map((ev: CycleDOMEvent) => (ev.ownerTarget as HTMLButtonElement).dataset['id']);
+        .map((ev: CycleDOMEvent) => Number((ev.ownerTarget as HTMLButtonElement).dataset['id']));
 
     const todoState$: Observable<TodoState> = Observable.merge(
         eventAddItem$.withLatestFrom(
@@ -77,7 +77,7 @@ function main({DOM}: So): Si {
             (_, title) => over(lensProp('list'), append({ title, completed: false }))
         ),
         removeTodoItemAt$.map(
-            index => over(lensProp('list'), remove(Number(index), 1))
+            index => over(lensProp('list'), remove(index, 1))
         ))
         .scan((state: TodoState, reducer) => {
             return reducer(state);
