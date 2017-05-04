@@ -35,9 +35,9 @@ function renderDOM({inputValue, list}: TodoState): VNode {
                     ]),
                     div('#new-todo.panel-body.row', [
                         div('.input-group.col-xs-8.col-xs-offset-2.input-group-lg', [
-                            input('.form-control'),
+                            input('.todo-title.form-control'),
                             span('.input-group-btn', [
-                                button('.btn.btn-success', [
+                                button('.add-todo.btn.btn-success', [
                                     i('.fa.fa-plus')
                                 ])
                             ])
@@ -45,7 +45,7 @@ function renderDOM({inputValue, list}: TodoState): VNode {
                     ]),
                     div('#todo-list.panel-body.row', [
                         ul('.list-group.col-xs-10.col-xs-offset-1', list.map((todoItem, index) =>
-                            li('.list-group-item.row', [
+                            li('.todo-item.list-group-item.row', [
                                 p('.col-xs-8.list-group-item-heading', [todoItem.title]),
                                 button('.col-xs-2.col-xs-offset-2.btn.btn-success.fa.fa-check', {
                                     attrs: {
@@ -63,12 +63,12 @@ function renderDOM({inputValue, list}: TodoState): VNode {
 
 function main({DOM}: So): Si {
     const eventAddItem$ = Observable.merge(
-        DOM.select('#new-todo button').events('click'),
-        DOM.select('#new-todo input').events('change')
+        DOM.select('#new-todo button.add-todo').events('click'),
+        DOM.select('#new-todo input.todo-title').events('change')
     )
-    const valueNewTodoItem$ = DOM.select('#new-todo input').events('change')
+    const valueNewTodoItem$ = DOM.select('#new-todo input.todo-title').events('change')
         .map(ev => (ev.target as HTMLInputElement).value);
-    const removeTodoItemAt$ = DOM.select('#todo-list ul li button').events('click')
+    const removeTodoItemAt$ = DOM.select('#todo-list ul li.todo-item button').events('click')
         .map((ev: CycleDOMEvent) => Number((ev.ownerTarget as HTMLButtonElement).dataset['id']));
 
     const todoState$: Observable<TodoState> = Observable.merge(
