@@ -62,21 +62,22 @@ function renderDOM({inputValue, list}: TodoState): VNode {
 }
 
 function main({DOM}: So): Si {
-    const eventAddItem$ = Observable.merge(
-        DOM.select('#new-todo button.add-todo').events('click'),
-        DOM.select('#new-todo input.todo-title').events('change')
-    )
-    const valueNewTodoItem$ = DOM.select('#new-todo input.todo-title').events('change')
-        .map(ev => (ev.target as HTMLInputElement).value);
-    const removeTodoItemAt$ = DOM.select('#todo-list ul li.todo-item button').events('click')
+    // DOM event
+    const eventClickAddTodoItem$ = DOM.select('#new-todo button.add-todo').events('click');
+    const eventChangeTodoTitle$ = DOM.select('#new-todo input.todo-title').events('change');
+    const eventClickRemoveTodoItem$ = DOM.select('#todo-list ul li.todo-item button').events('click');
+
+    const eventAddItem$ = Observable.merge(eventClickAddTodoItem$, eventChangeTodoTitle$);
+    const todoTitleValue$ = eventChangeTodoTitle$.map(ev => (ev.target as HTMLInputElement).value);
+    const todoItemIndexToRemove$ = eventClickRemoveTodoItem$
         .map((ev: CycleDOMEvent) => Number((ev.ownerTarget as HTMLButtonElement).dataset['id']));
 
     const todoState$: Observable<TodoState> = Observable.merge(
         eventAddItem$.withLatestFrom(
-            valueNewTodoItem$,
+            todoTitleValue$,
             (_, title) => over(lensProp('list'), append({ title, completed: false }))
         ),
-        removeTodoItemAt$.map(
+        todoItemIndexToRemove$.map(
             index => over(lensProp('list'), remove(index, 1))
         ))
         .scan((state: TodoState, reducer) => {
