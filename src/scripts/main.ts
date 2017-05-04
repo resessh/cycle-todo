@@ -23,6 +23,7 @@ type TodoState = {
     inputValue: string;
     list: TodoItem[];
 }
+const defaultTodoState = { inputValue: '', list: [] };
 
 function renderDOM({inputValue, list}: TodoState): VNode {
     return div('.container', [
@@ -80,7 +81,7 @@ function main({DOM}: So): Si {
         ))
         .scan((state: TodoState, reducer) => {
             return reducer(state);
-        }, { inputValue: '', list: [] }).startWith({ inputValue: '', list: [] });
+        }, defaultTodoState).startWith(defaultTodoState);
 
     return {
         DOM: todoState$.map((todoState) => renderDOM(todoState))
