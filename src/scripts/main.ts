@@ -17,6 +17,7 @@ type Si = {
 
 type TodoItem = {
     title: string;
+    completed: true;
 }
 
 type TodoState = {
@@ -35,7 +36,11 @@ function renderDOM({inputValue, list}: TodoState): VNode {
                     ]),
                     div('#new-todo.panel-body.row', [
                         div('.input-group.col-xs-8.col-xs-offset-2.input-group-lg', [
-                            input('.todo-title.form-control'),
+                            input('.todo-title.form-control', {
+                                attrs: {
+                                    value: inputValue
+                                }
+                            }),
                             span('.input-group-btn', [
                                 button('.add-todo.btn.btn-success', [
                                     i('.fa.fa-plus')
@@ -73,17 +78,24 @@ function main({DOM}: So): Si {
     const todoItemIndexToRemove$ = eventClickRemoveTodoItem$
         .map((ev: CycleDOMEvent) => Number((ev.ownerTarget as HTMLButtonElement).dataset['id']));
 
-    const todoState$: Observable<TodoState> = Observable.merge(
+    const todoStateInputValue$: Observable<string> = todoTitleValue$.combineLatest(
+        eventAddItem$, (oldValue, _) => '');
+    const todoStateList$: Observable<TodoItem[]> = Observable.merge(
         eventAddItem$.withLatestFrom(
             todoTitleValue$,
-            (_, title) => over(lensProp('list'), append({ title, completed: false }))
+            (_, title) => append({ title, completed: false })
         ),
         todoItemIndexToRemove$.map(
-            index => over(lensProp('list'), remove(index, 1))
+            index => remove(index, 1)
         ))
-        .scan((state: TodoState, reducer) => {
-            return reducer(state);
-        }, defaultTodoState).startWith(defaultTodoState);
+        .scan((list: TodoItem[], reducer) => {
+            return reducer(list);
+        }, []).startWith([]);
+
+    const todoState$: Observable<TodoState> = Observable.combineLatest(
+        todoStateInputValue$, todoStateList$, (inputValue, list) => {
+            return { inputValue, list }
+        }).startWith(defaultTodoState);
 
     return {
         DOM: todoState$.map((todoState) => renderDOM(todoState))
