@@ -64,11 +64,12 @@ function renderDOM({inputValue, list}: TodoState): VNode {
 function main({DOM}: So): Si {
     // DOM event
     const eventClickAddTodoItem$ = DOM.select('#new-todo button.add-todo').events('click');
-    const eventChangeTodoTitle$ = DOM.select('#new-todo input.todo-title').events('change');
+    const eventEnterPressTodoInput$ = DOM.select('#new-todo input.todo-title').events('keypress')
+        .filter(ev => (ev as KeyboardEvent).keyCode == 13);
     const eventClickRemoveTodoItem$ = DOM.select('#todo-list ul li.todo-item button').events('click');
 
-    const eventAddItem$ = Observable.merge(eventClickAddTodoItem$, eventChangeTodoTitle$);
-    const todoTitleValue$ = eventChangeTodoTitle$.map(ev => (ev.target as HTMLInputElement).value);
+    const eventAddItem$ = Observable.merge(eventClickAddTodoItem$, eventEnterPressTodoInput$);
+    const todoTitleValue$ = eventEnterPressTodoInput$.map(ev => (ev.target as HTMLInputElement).value);
     const todoItemIndexToRemove$ = eventClickRemoveTodoItem$
         .map((ev: CycleDOMEvent) => Number((ev.ownerTarget as HTMLButtonElement).dataset['id']));
 
