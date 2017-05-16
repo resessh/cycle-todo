@@ -75,18 +75,17 @@ function main({DOM}: So): Si {
     const eventAdd$ = DOM.select('.event-add').events('submit').do(ev => ev.preventDefault()).share();
     const eventInput$ = DOM.select('.event-input').events('input');
     const eventRemove$ = DOM.select('.event-remove').events('click');
+    const inputText$ = eventInput$.map(ev => (ev.target as HTMLInputElement).value);
+    const removeIndex$ = eventRemove$.map((ev: CycleDOMEvent) => Number((ev.ownerTarget as HTMLButtonElement).dataset['id']));
 
-    const todoTitleValue$ = eventInput$.map(ev => (ev.target as HTMLInputElement).value);
-    const todoItemIndexToRemove$ = eventRemove$.map((ev: CycleDOMEvent) => Number((ev.ownerTarget as HTMLButtonElement).dataset['id']));
-
-    const todoStateInputValue$: Observable<string> = todoTitleValue$.combineLatest(
+    const todoStateInputValue$: Observable<string> = inputText$.combineLatest(
         eventAdd$, (oldValue, _) => '');
     const todoStateList$: Observable<TodoItem[]> = Observable.merge(
         eventAdd$.withLatestFrom(
-            todoTitleValue$,
+            inputText$,
             (_, title) => append({ title, completed: false })
         ),
-        todoItemIndexToRemove$.map(
+        removeIndex$.map(
             index => remove(index, 1)
         ))
         .scan((list: TodoItem[], reducer) => {
