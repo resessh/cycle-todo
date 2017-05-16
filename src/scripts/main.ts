@@ -4,7 +4,7 @@ import { VNode } from '@cycle/dom';
 import { DOMSource } from '@cycle/dom/rxjs-typings';
 import { CycleDOMEvent, form, div, input, p, h2, button, span, i, ul, li, makeDOMDriver } from '@cycle/dom';
 import { run } from '@cycle/rxjs-run';
-import { append, remove, over, lensProp } from 'ramda';
+import { append, remove, over, lensProp, assoc, compose } from 'ramda';
 
 type So = {
     DOM: DOMSource;
@@ -20,6 +20,7 @@ type TodoItem = {
     completed: true;
 }
 
+type StateAction = (acc: TodoState) => TodoState;
 type TodoState = {
     inputValue: string;
     list: TodoItem[];
@@ -71,31 +72,29 @@ function renderDOM({inputValue, list}: TodoState): VNode {
 }
 
 function main({DOM}: So): Si {
-    // DOM event
+    // event
     const eventAdd$ = DOM.select('.event-add').events('submit').do(ev => ev.preventDefault()).share();
     const eventInput$ = DOM.select('.event-input').events('input');
     const eventRemove$ = DOM.select('.event-remove').events('click');
     const inputText$ = eventInput$.map(ev => (ev.target as HTMLInputElement).value);
     const removeIndex$ = eventRemove$.map((ev: CycleDOMEvent) => Number((ev.ownerTarget as HTMLButtonElement).dataset['id']));
 
-    const todoStateInputValue$: Observable<string> = inputText$.combineLatest(
-        eventAdd$, (oldValue, _) => '');
-    const todoStateList$: Observable<TodoItem[]> = Observable.merge(
+    // state
+    const defaultState: TodoState = {
+        inputValue: '',
+        list: []
+    };
+    const todoState$ = Observable.merge(
         eventAdd$.withLatestFrom(
             inputText$,
-            (_, title) => append({ title, completed: false })
+            (_, title) => compose(
+                over(lensProp('list'), append({ title, completed: false})),
+                assoc('inputValue', '')
+            )
         ),
-        removeIndex$.map(
-            index => remove(index, 1)
-        ))
-        .scan((list: TodoItem[], reducer) => {
-            return reducer(list);
-        }, []).startWith([]);
-
-    const todoState$: Observable<TodoState> = Observable.combineLatest(
-        todoStateInputValue$, todoStateList$, (inputValue, list) => {
-            return { inputValue, list }
-        }).startWith(defaultTodoState);
+        inputText$.map(text => assoc('inputValue', text)),
+        removeIndex$.map(index => over(lensProp('list'), remove(index, 1)))
+    ).scan((acc: TodoState, fn: StateAction) => fn(acc), defaultState).startWith(defaultState).do(console.log);
 
     return {
         DOM: todoState$.map((todoState) => renderDOM(todoState))
