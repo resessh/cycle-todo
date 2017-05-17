@@ -25,7 +25,6 @@ type TodoState = {
     inputValue: string;
     list: TodoItem[];
 }
-const defaultTodoState = { inputValue: '', list: [] };
 
 function renderDOM({inputValue, list}: TodoState): VNode {
     return div('.container', [
